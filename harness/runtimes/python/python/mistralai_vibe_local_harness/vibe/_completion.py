@@ -235,6 +235,7 @@ async def execute_completion(  # noqa: PLR0914 - one local per step of the call'
         return _logged_failure(
             action,
             _stream_failed_event(action, exc, provider=config.provider, route=route),
+            cause=exc,
             elapsed_s=None,
         )
     if isinstance(credential, ProviderAuthRequired):
@@ -299,7 +300,8 @@ async def execute_completion(  # noqa: PLR0914 - one local per step of the call'
                         provider_name=config.provider,
                         provider_api_style=config.api_style,
                         model=route.model,
-                        streaming=action.purpose == "agent"
+                        streaming=config.backend == "mistral"
+                        or action.purpose == "agent"
                         or reasoning_watch is not None,
                         temperature=route.temperature,
                         max_tokens=config.output_token_cap(route),
@@ -318,9 +320,10 @@ async def execute_completion(  # noqa: PLR0914 - one local per step of the call'
                     # The standalone request turns reasoning off below instead of
                     # through the route, so a route without reasoning sends none.
                     config.compaction_model if standalone else route,
-                    # Watching reasoning needs the stream; other compaction calls
-                    # wait for the whole answer.
-                    stream=action.purpose == "agent" or reasoning_watch is not None,
+                    # Compaction streams too, although nothing is published from it: a
+                    # long summary sent as one plain response transfers no bytes until
+                    # it is complete, and proxies that close idle connections cut it.
+                    stream=True,
                     disable_reasoning=standalone,
                     metadata=(
                         config.completion_metadata(action.purpose, action.iteration)
@@ -381,6 +384,7 @@ async def _call_failure(
         return _logged_failure(
             action,
             _reasoning_limit_event(action, exc, provider=config.provider, route=route),
+            cause=exc,
             elapsed_s=elapsed_s,
         )
     rejection = credential_rejection(read_provider_failure(exc))
@@ -392,7 +396,7 @@ async def _call_failure(
                 action, exc, provider=config.provider, route=route
             )
         )
-        return _logged_failure(action, failure, elapsed_s=elapsed_s)
+        return _logged_failure(action, failure, cause=exc, elapsed_s=elapsed_s)
     # Tell the credential's owner what the borrower observed, so the
     # material just refused is not re-sent on the next turn.
     await config.credentials.reject(
@@ -406,6 +410,7 @@ async def _call_failure(
             credential.api_key_source,
             details=_failure_details(action, config.provider, route, exc),
         ),
+        cause=exc,
         elapsed_s=elapsed_s,
     )
 
@@ -709,12 +714,15 @@ def _logged_failure(
     action: RustLLMCallAction,
     event: RustCompletionFailedEvent,
     *,
+    cause: BaseException,
     elapsed_s: float | None,
 ) -> RustCompletionFailedEvent:
     """Record a failed model call in the Host log before the turn reports it.
 
     The failure event only reaches the session projection; without this record
-    the process log shows a request going out and nothing after it.
+    the process log shows a request going out and nothing after it. The record
+    carries the traceback of ``cause``, since some transport errors have an
+    empty message and their type alone does not say where they were raised.
     """
     error = event.error
     logger.warning(
@@ -727,6 +735,7 @@ def _logged_failure(
         "n/a" if elapsed_s is None else f"{elapsed_s:.1f}",
         json.dumps(error.details, sort_keys=True),
         error.message,
+        exc_info=cause,
     )
     return event
 
