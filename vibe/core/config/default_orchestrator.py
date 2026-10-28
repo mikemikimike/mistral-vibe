@@ -87,6 +87,7 @@ async def build_default_orchestrator(
         layers=layers,
         default_layer_resolver=default_layer_resolver,
         validation_context={"harness_files": manager},
+        harness_files=manager,
     )
     await asyncio.to_thread(
         configure_ssl_context,
