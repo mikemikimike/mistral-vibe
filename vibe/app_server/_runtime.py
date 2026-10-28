@@ -166,6 +166,9 @@ def _otel_enabled(config: VibeConfigSchema) -> bool:
             config.otel_endpoint, config.get_mistral_provider()
         )
         is not None
+    )
+
+
 def _command_tool_name(mode: _CommandEnvironmentMode) -> str:
     """The Vibe tool whose settings configure the command environment's tool."""
     return "bash" if mode == "unix" else mode
