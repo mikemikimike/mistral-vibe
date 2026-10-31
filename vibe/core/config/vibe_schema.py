@@ -43,7 +43,7 @@ from vibe.core.config._defaults import (
 # (vibe_schema.py imports from vibe.observability.logging). The constant
 # lives in vibe.config_values.
 from vibe.core.config._model_aliases import build_alias_index, warn_ignored_alias
-from vibe.core.config.harness_files import get_harness_files_manager
+from vibe.core.config.harness_files import HarnessFilesManager, get_harness_files_manager
 from vibe.core.config.layers.admin import AdminConfigLayer
 from vibe.core.config.models import (
     ACTIVE_MODEL_SELECTOR,
