@@ -68,6 +68,10 @@ from mistralai_vibe_local_harness.vibe._errors import (
     HarnessTurnQueuePendingError,
     HarnessUnfinishedMigrationError,
 )
+from mistralai_vibe_local_harness.vibe._foreign_hooks import (
+    HookProcess,
+    HookProcessResolver,
+)
 from mistralai_vibe_local_harness.vibe._hook_config import (
     CompiledHooks,
     ForeignHookDefinition,
@@ -174,6 +178,11 @@ from mistralai_vibe_local_harness.vibe._system_instructions import (
     build_vibe_code_system_instructions,
     with_shell_guidance,
 )
+from mistralai_vibe_local_harness.vibe._utility_completion import (
+    UtilityCompletionError,
+    UtilityReply,
+    execute_utility_completion,
+)
 
 __all__ = [
     "BASH_TIMEOUT",
@@ -239,6 +248,8 @@ __all__ = [
     "HookApprovalCallback",
     "HookContext",
     "HookHandlers",
+    "HookProcess",
+    "HookProcessResolver",
     "LegacyImportSource",
     "LegacySessionReference",
     "LegacySourceLoader",
@@ -301,6 +312,8 @@ __all__ = [
     "TurnStartRequest",
     "UnifiedHarnessSessionBackend",
     "UnifiedHarnessSessionBackendHost",
+    "UtilityCompletionError",
+    "UtilityReply",
     "adapter_capabilities",
     "bash_timeout",
     "build_classification_request",
@@ -311,6 +324,7 @@ __all__ = [
     "create_harness_host",
     "default_model_facts",
     "default_tool_risk_classifier",
+    "execute_utility_completion",
     "invalid_api_key_message",
     "protected_target",
     "run_helper",
